@@ -12,7 +12,7 @@ class Chat
   end
 
   def display_message(user, message)
-    $stdout.puts "#{user}: #{message}"
+    puts "#{user}: #{message}"
   end
 
   def listen_for_messages
@@ -29,18 +29,8 @@ class Chat
   end
 
   def wait_for_message
-    message =  $stdin.gets.strip
+    message =  gets.strip
     publish_message(@current_user, message)
-  end
-
-
-  def self.run
-    chat = Chat.new
-    $stdout.print 'Type in your name: '
-    chat.current_user = $stdin.gets.strip
-    $stdout.puts "Hi #{chat.current_user}, you just joined a chat room!Type your message in and press enter."
-    chat.listen_for_messages if 
-    loop { chat.wait_for_message }
   end
 
 private
