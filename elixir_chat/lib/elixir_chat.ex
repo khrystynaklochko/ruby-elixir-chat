@@ -15,6 +15,10 @@ defmodule ElixirChat do
     wait_for_message(user, channel)
   end
 
+  def display_message(user, message) do
+    IO.puts "#{user}: #{message}"
+  end
+
   def wait_for_message(user, channel) do
     message = IO.gets("") |> String.strip
     publish_message(user, message, channel)
@@ -22,6 +26,10 @@ defmodule ElixirChat do
   end
 
   def listen_for_messages(channel, queue_name) do
+    AMQP.Queue.subscribe channel, queue_name, fn(payload, _metadata) ->
+      { :ok, data } = JSON.decode(payload)
+      display_message(data["user"], data["message"])
+    end
   end
 
   def publish_message(user, message, channel) do
@@ -30,5 +38,3 @@ defmodule ElixirChat do
   end
 
 end
-
-ElixirChat.start

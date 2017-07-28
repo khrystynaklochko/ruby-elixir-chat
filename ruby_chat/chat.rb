@@ -2,43 +2,50 @@ require 'json'
 require 'bunny'
 class Chat
 
-  def display_message(user, message)
-    puts "#{user}: #{message}"
+  attr_accessor :current_user, :channel, :exchange, :session
+
+  def initialize( current_user = 'default', channel = new_channel )
+    @current_user = current_user
+    @session = channel
+    @channel = @session.create_channel
+    @exchange = @channel.fanout('super.chat')
   end
 
-  def initialize
-    print "Type in your name: "
-    @current_user = gets.strip
-    puts "Hi #{@current_user}, you just joined a chat room! Type your message in and press enter."
-
-    conn = Bunny.new
-    conn.start
-
-    @channel = conn.create_channel
-    @exchange = @channel.fanout("super.chat")
-
-    listen_for_messages
+  def display_message(user, message)
+    $stdout.puts "#{user}: #{message}"
   end
 
   def listen_for_messages
-    queue = @channel.queue("")
-
-    queue.bind(@exchange).subscribe do |delivery_info, metadata, payload|
+    queue = @channel.queue('')
+    queue.bind(@exchange).subscribe do |_delivery_info, _metadata, payload|
       data = JSON.parse(payload)
       display_message(data['user'], data['message'])
     end
   end
 
   def publish_message(user, message)
+    data = JSON.generate(user: user, message: message)
+    @exchange.publish(data)
   end
 
   def wait_for_message
-    message = gets.strip
+    message =  $stdin.gets.strip
     publish_message(@current_user, message)
-    wait_for_message
   end
 
+
+  def self.run
+    chat = Chat.new
+    $stdout.print 'Type in your name: '
+    chat.current_user = $stdin.gets.strip
+    $stdout.puts "Hi #{chat.current_user}, you just joined a chat room!Type your message in and press enter."
+    chat.listen_for_messages if 
+    loop { chat.wait_for_message }
+  end
+
+private
+  def new_channel
+    Bunny.new.start
+  end
 end
 
-chat = Chat.new
-chat.wait_for_message

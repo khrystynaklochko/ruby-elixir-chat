@@ -1,3 +1,5 @@
 source "https://rubygems.org"
-gem "bunny"
-gem "json"
+gem 'bunny'
+gem 'json'
+gem 'rspec', '~> 3.6'
+gem 'bunny-mock', '~> 1.6'
